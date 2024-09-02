@@ -1,8 +1,12 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const puppeteer = require("puppeteer");
+const { browserPath } = require('../../config.json');
 
 let defaultName = "Flower, Sun, and Rain";
-let browserProm = puppeteer.launch({headless: false});
+
+
+let browserProm = puppeteer.launch({ headless: false, args: ['--disable-gpu'], executablePath: browserPath});
+console.log("Browser opened.");
 
 const timeEmojis = new Map([
     ['time_00' , '1279923359488016404'],
@@ -20,6 +24,7 @@ async function getHLTBData(gameQuery) {
     //Open up new HLTB page w/ given title
     let browser = await browserProm;
     const page = await browser.newPage();
+    await page.setUserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36");
     await page.goto('https://howlongtobeat.com/?q=' + gameQuery);
 
     //Wait for page to update with search results
@@ -27,8 +32,10 @@ async function getHLTBData(gameQuery) {
     const searchResults = await page.$$('.GameCard_search_list__IuMbi');
     console.log(searchResults.length + " games found. Selecting first result.");
 
-    if (searchResults.length == 0)
+    if (searchResults.length == 0) {
+	await page.close();
         return "No results";
+    }
     else
         return await parseDetails(page, searchResults[0]);
 }
