@@ -85,7 +85,7 @@ async function getHLTBData(gameQuery) {
 }
 
 async function extractDetails(result) {
-    if(result.length === 0)
+    if(result.data.length === 0)
         return("No results");
     const game = result.data[0];
 
