@@ -23,7 +23,7 @@ async function getHLTBData(gameQuery) {
     myHeaders.append("content-type", "application/json");
     myHeaders.append("origin", "https://howlongtobeat.com");
     myHeaders.append("priority", "u=1, i");
-    myHeaders.append("referer", "https://howlongtobeat.com/");
+    myHeaders.append("referer", "https://howlongtobeat.com");
     myHeaders.append("sec-ch-ua", "\"Chromium\";v=\"130\", \"Microsoft Edge\";v=\"130\", \"Not?A_Brand\";v=\"99\"");
     myHeaders.append("sec-ch-ua-mobile", "?0");
     myHeaders.append("sec-ch-ua-platform", "\"Windows\"");
@@ -59,6 +59,7 @@ async function getHLTBData(gameQuery) {
         "modifier": ""
         },
         "users": {
+        "id": "90f8120e015db09f",
         "sortCategory": "postcount"
         },
         "lists": {
@@ -78,7 +79,7 @@ async function getHLTBData(gameQuery) {
     redirect: "follow"
     };
 
-    return fetch("https://howlongtobeat.com/api/search/83b1e820d65038e8", requestOptions)
+    return fetch("https://howlongtobeat.com/api/search", requestOptions)
     .then((response) => response.text())
     .then((result) => extractDetails(JSON.parse(result)))
     .catch((error) => console.error(error));
