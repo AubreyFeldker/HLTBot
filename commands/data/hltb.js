@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 let defaultName = "Flower, Sun, and Rain";
+let apiURL = "";
 
 const timeEmojis = new Map([
     ['0' , '1279923359488016404'],
@@ -15,6 +16,37 @@ const timeEmojis = new Map([
     ['9' , '1279925156654878831'],
     ['10', '1279923313103077431']
 ]);
+
+async function getApiUrl() {
+    const myHeaders = new Headers();
+    myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0");
+
+    const requestOptions = {
+        method: "GET",
+        headers: myHeaders,
+        redirect: "follow"
+    };
+
+    const pattern1 = /chunks\/pages\/\_app-[a-z0-9]*/;
+    const pattern2 = /\/search\/"\.concat\("[a-f0-9]*"\).concat\("[a-f0-9]*"\)/;
+
+    return fetch("https://howlongtobeat.com/", requestOptions)
+    .then((response) => response.text())
+    .then((resText) => pattern1.exec(resText)[0].split('-')[1])
+    .then(
+        (chunk) => fetch(`https://howlongtobeat.com/_next/static/chunks/pages/_app-${chunk}.js`, requestOptions)
+        .then((response) => response.text())
+        .then((resText) => pattern2.exec(resText)[0])
+        .then((pageLink) => apiURL = parseConcat(pageLink))
+        .catch((error) => console.log(error))
+    );
+}
+
+function parseConcat(extraction) {
+    const splits = extraction.substring(12).split('"');
+    console.log(splits);
+    return splits[1] + splits[3];
+}
 
 async function getHLTBData(gameQuery) {
     const myHeaders = new Headers();
@@ -33,44 +65,44 @@ async function getHLTBData(gameQuery) {
     myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0");
 
     const raw = JSON.stringify({
-    "searchType": "games",
-    "searchTerms": gameQuery.split(" "),
-    "searchPage": 1,
-    "size": 20,
-    "searchOptions": {
-        "games": {
-        "userId": 0,
-        "platform": "",
-        "sortCategory": "popular",
-        "rangeCategory": "main",
-        "rangeTime": {
-            "min": null,
-            "max": null
+        "searchType": "games",
+        "searchTerms": gameQuery.split(" "),
+        "searchPage": 1,
+        "size": 20,
+        "searchOptions": {
+          "games": {
+            "userId": 0,
+            "platform": "",
+            "sortCategory": "popular",
+            "rangeCategory": "main",
+            "rangeTime": {
+              "min": null,
+              "max": null
+            },
+            "gameplay": {
+              "perspective": "",
+              "flow": "",
+              "genre": "",
+              "subGenre": " "
+            },
+            "rangeYear": {
+              "min": "",
+              "max": ""
+            },
+            "modifier": ""
+          },
+          "users": {
+            "sortCategory": "postcount"
+          },
+          "lists": {
+            "sortCategory": "follows"
+          },
+          "filter": "",
+          "sort": 0,
+          "randomizer": 0
         },
-        "gameplay": {
-            "perspective": "",
-            "flow": "",
-            "genre": ""
-        },
-        "rangeYear": {
-            "min": "",
-            "max": ""
-        },
-        "modifier": ""
-        },
-        "users": {
-        "id": "90f8120e015db09f",
-        "sortCategory": "postcount"
-        },
-        "lists": {
-        "sortCategory": "follows"
-        },
-        "filter": "",
-        "sort": 0,
-        "randomizer": 0
-    },
-    "useCache": true
-    });
+        "useCache": true
+      });
 
     const requestOptions = {
     method: "POST",
@@ -79,10 +111,10 @@ async function getHLTBData(gameQuery) {
     redirect: "follow"
     };
 
-    return fetch("https://howlongtobeat.com/api/search", requestOptions)
+    return fetch(`https://howlongtobeat.com/api/search/${apiURL}`, requestOptions)
     .then((response) => response.text())
     .then((result) => extractDetails(JSON.parse(result)))
-    .catch((error) => console.error(error));
+    .catch((error) => console.log(error));
 }
 
 async function extractDetails(result) {
@@ -134,6 +166,10 @@ module.exports = {
 	async execute(interaction) {
         const gameName = interaction.options.getString('title');
         await interaction.deferReply();
+        if (apiURL == "") {
+            await getApiUrl();
+            console.log(`Search API URL updated to ${apiURL}`)
+        }
         let details = await getHLTBData(gameName);
         
         if(details == "No results")
