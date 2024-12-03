@@ -285,7 +285,8 @@ module.exports = {
 	},
     async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused();
-        const choices = platform_auto.filter(choice => choice.toLowerCase().startsWith(focusedValue.toLowerCase()));
+        let choices = platform_auto.filter(choice => choice.toLowerCase().startsWith(focusedValue.toLowerCase()));
+        choices.length = Math.min(choices.length, 25);
         await interaction.respond(
             choices.map(choice => ({ name: choice, value: choice })),
         );
