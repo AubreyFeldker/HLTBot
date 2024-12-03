@@ -31,7 +31,7 @@ client.once(Events.ClientReady, readyClient => {
 client.login(token);
 
 client.on(Events.InteractionCreate, async interaction => {
-	if (!interaction.isChatInputCommand() || !interaction.isAutocomplete) return;
+	if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()) return;
 
 	const command = interaction.client.commands.get(interaction.commandName);
 
