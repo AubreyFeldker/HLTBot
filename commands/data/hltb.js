@@ -17,6 +17,106 @@ const timeEmojis = new Map([
     ['10', '1279923313103077431']
 ]);
 
+const platform_auto = [
+    '3DO',
+    'Acorn Archimedes',
+    'Amazon Luna',
+    'Amiga',
+    'Amiga CD32',
+    'Amstrad CPC',
+    'Apple II',
+    'Arcade',
+    'Atari 2600',
+    'Atari 5200',
+    'Atari 7800',
+    'Atari 8-bit Family',
+    'Atari Jaguar',
+    'Atari Jaguar CD',
+    'Atari Lynx',
+    'Atari ST',
+    'BBC Micro',
+    'Browser',
+    'ColecoVision',
+    'Commodore 64',
+    'Commodore PET',
+    'Commodore VIC-20',
+    'Dreamcast',
+    'Evercade',
+    'FM Towns',
+    'FM-7',
+    'Game & Watch',
+    'Game Boy',
+    'Game Boy Advance',
+    'Game Boy Color',
+    'Gear VR',
+    'Gizmondo',
+    'Google Stadia',
+    'Intellivision',
+    'Interactive Movie',
+    'Linux',
+    'Mac',
+    'Meta Quest',
+    'Mobile',
+    'MSX',
+    'N-Gage',
+    'NEC PC-88',
+    'NEC PC-98',
+    'NEC PC-FX',
+    'Neo Geo',
+    'Neo Geo CD',
+    'Neo Geo Pocket',
+    'NES',
+    'Nintendo 3DS',
+    'Nintendo 64',
+    'Nintendo DS',
+    'Nintendo GameCube',
+    'Nintendo Switch',
+    'Oculus Go',
+    'Odyssey',
+    'Odyssey 2',
+    'OnLive',
+    'Ouya',
+    'PC',
+    'Philips CD-i',
+    'Playdate',
+    'PlayStation',
+    'PlayStation 2',
+    'PlayStation 3',
+    'PlayStation 4',
+    'PlayStation 5',
+    'PlayStation Mobile',
+    'PlayStation Portable',
+    'PlayStation Vita',
+    'Plug & Play',
+    'Sega 32X',
+    'Sega CD',
+    'Sega Game Gear',
+    'Sega Master System',
+    'Sega Mega Drive/Genesis',
+    'Sega Pico',
+    'Sega Saturn',
+    'SG-1000',
+    'Sharp X1',
+    'Sharp X68000',
+    'Super Nintendo',
+    'Tiger Handheld',
+    'TurboGrafx-16',
+    'TurboGrafx-CD',
+    'Vectrex',
+    'Virtual Boy',
+    'Wii',
+    'Wii U',
+    'Windows Phone',
+    'WonderSwan',
+    'Xbox',
+    'Xbox 360',
+    'Xbox One',
+    'Xbox Series X/S',
+    'ZeeboZ',
+    'X Spectrum',
+    'ZX81'
+];
+
 async function getApiUrl() {
     const myHeaders = new Headers();
     myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0");
@@ -48,7 +148,7 @@ function parseConcat(extraction) {
     return splits[1] + splits[3];
 }
 
-async function getHLTBData(gameQuery) {
+async function getHLTBData(gameQuery, platform) {
     const myHeaders = new Headers();
     myHeaders.append("accept", "*/*");
     myHeaders.append("accept-language", "en-US,en;q=0.9");
@@ -72,7 +172,7 @@ async function getHLTBData(gameQuery) {
         "searchOptions": {
           "games": {
             "userId": 0,
-            "platform": "",
+            "platform": platform,
             "sortCategory": "popular",
             "rangeCategory": "main",
             "rangeTime": {
@@ -162,19 +262,32 @@ module.exports = {
             option.setName('title')
                 .setDescription('What game are you looking for? Precise syntax required.')
                 .setRequired(true)
+        )
+        .addStringOption(option =>
+            option.setName('platform')
+                .setDescription('Platform you want to search for')
+                .setAutocomplete(true)
         ),
 	async execute(interaction) {
         const gameName = interaction.options.getString('title');
+        const platform = interaction.options.getString('platform') ?? '';
         await interaction.deferReply();
         if (apiURL == "") {
             await getApiUrl();
             console.log(`Search API URL updated to ${apiURL}`)
         }
-        let details = await getHLTBData(gameName);
+        let details = await getHLTBData(gameName, platform);
         
         if(details == "No results")
             await interaction.followUp(`No results found for **${gameName}**.`);
         else
 		    await interaction.followUp({embeds: [buildEmbed(details)]});
 	},
+    async autocomplete(interaction) {
+        const focusedValue = interaction.options.getFocused();
+        const choices = platform_auto.filter(choice => choice.toLowerCase().startsWith(focusedValue.toLowerCase()));
+        await interaction.respond(
+            choices.map(choice => ({ name: choice, value: choice })),
+        );
+    },
 };

@@ -31,7 +31,7 @@ client.once(Events.ClientReady, readyClient => {
 client.login(token);
 
 client.on(Events.InteractionCreate, async interaction => {
-	if (!interaction.isChatInputCommand()) return;
+	if (!interaction.isChatInputCommand() || !interaction.isAutocomplete) return;
 
 	const command = interaction.client.commands.get(interaction.commandName);
 
@@ -40,15 +40,25 @@ client.on(Events.InteractionCreate, async interaction => {
 		return;
 	}
 
-	try {
-		await command.execute(interaction);
-	} catch (error) {
-		console.error(error);
-		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: 'Reloading connection to HLTB... try again in a minute.', ephemeral: true });
-            process.exit(0);
-		} else {
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-		}
-	}
+    if (interaction.isAutocomplete) {
+        try {
+            await command.autocomplete(interaction);
+        }
+        catch (error) {
+            console.error(error);
+        }
+    }
+    else {
+        try {
+            await command.execute(interaction);
+        } catch (error) {
+            console.error(error);
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({ content: 'Reloading connection to HLTB... try again in a minute.', ephemeral: true });
+                process.exit(0);
+            } else {
+                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+            }
+        }
+    }
 });
