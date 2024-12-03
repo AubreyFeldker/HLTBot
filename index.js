@@ -40,7 +40,7 @@ client.on(Events.InteractionCreate, async interaction => {
 		return;
 	}
 
-    if (interaction.isAutocomplete) {
+    if (interaction.isAutocomplete()) {
         try {
             await command.autocomplete(interaction);
         }
