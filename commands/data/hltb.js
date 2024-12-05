@@ -183,7 +183,7 @@ async function getHLTBData(gameQuery, platform) {
               "perspective": "",
               "flow": "",
               "genre": "",
-              "subGenre": " "
+              "subGenre": ""
             },
             "rangeYear": {
               "min": "",
