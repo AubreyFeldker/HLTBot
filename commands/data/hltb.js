@@ -128,7 +128,7 @@ async function getApiUrl() {
     };
 
     const pattern1 = /chunks\/pages\/\_app-[a-z0-9]*/;
-    const pattern2 = /\/search\/"\.concat\("[a-f0-9]*"\).concat\("[a-f0-9]*"\)/;
+    const pattern2 = /\/find\/"\.concat\("[a-f0-9]*"\).concat\("[a-f0-9]*"\)/;
 
     return fetch("https://howlongtobeat.com/", requestOptions)
     .then((response) => response.text())
@@ -144,7 +144,7 @@ async function getApiUrl() {
 
 function parseConcat(extraction) {
     const splits = extraction.substring(12).split('"');
-    console.log(splits);
+    console.log('The splits: ' + splits);
     return splits[1] + splits[3];
 }
 
@@ -155,18 +155,18 @@ async function getHLTBData(gameQuery, platform) {
     myHeaders.append("content-type", "application/json");
     myHeaders.append("origin", "https://howlongtobeat.com");
     myHeaders.append("priority", "u=1, i");
-    myHeaders.append("referer", "https://howlongtobeat.com");
-    myHeaders.append("sec-ch-ua", "\"Chromium\";v=\"130\", \"Microsoft Edge\";v=\"130\", \"Not?A_Brand\";v=\"99\"");
+    myHeaders.append("referer", "https://howlongtobeat.com/");
+    myHeaders.append("sec-ch-ua", "\"Microsoft Edge\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"");
     myHeaders.append("sec-ch-ua-mobile", "?0");
     myHeaders.append("sec-ch-ua-platform", "\"Windows\"");
     myHeaders.append("sec-fetch-dest", "empty");
     myHeaders.append("sec-fetch-mode", "cors");
     myHeaders.append("sec-fetch-site", "same-origin");
-    myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0");
+    myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0");
 
     const raw = JSON.stringify({
         "searchType": "games",
-        "searchTerms": gameQuery.split(" "),
+        "searchTerms": gameQuery.split(' '),
         "searchPage": 1,
         "size": 20,
         "searchOptions": {
@@ -183,7 +183,7 @@ async function getHLTBData(gameQuery, platform) {
               "perspective": "",
               "flow": "",
               "genre": "",
-              "subGenre": ""
+              "difficulty": ""
             },
             "rangeYear": {
               "min": "",
@@ -211,7 +211,7 @@ async function getHLTBData(gameQuery, platform) {
     redirect: "follow"
     };
 
-    return fetch(`https://howlongtobeat.com/api/search/${apiURL}`, requestOptions)
+    return fetch(`https://howlongtobeat.com/api/find/${apiURL}`, requestOptions)
     .then((response) => response.text())
     .then((result) => extractDetails(JSON.parse(result)))
     .catch((error) => console.log(error));
