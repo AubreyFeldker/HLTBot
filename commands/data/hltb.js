@@ -119,7 +119,7 @@ const platform_auto = [
 
 async function getApiUrl() {
     const myHeaders = new Headers();
-    myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0");
+    myHeaders.append("user-agent", (await fetch("https://jnrbsn.github.io/user-agents/user-agents.json", {method: 'GET'})).text());
 
     const requestOptions = {
         method: "GET",
@@ -128,7 +128,7 @@ async function getApiUrl() {
     };
 
     const pattern1 = /chunks\/pages\/\_app-[a-z0-9]*/;
-    const pattern2 = /\/lookup\/"\.concat\("[a-f0-9]*"\).concat\("[a-f0-9]*"\)/;
+    const pattern2 = /"[a-z\/]+"\.concat\("[a-f0-9]*"\).concat\("[a-f0-9]*"\)/;
 
     return fetch("https://howlongtobeat.com/", requestOptions)
     .then((response) => response.text())
@@ -143,26 +143,17 @@ async function getApiUrl() {
 }
 
 function parseConcat(extraction) {
-    const splits = extraction.substring(12).split('"');
-    console.log('The splits: ' + splits);
-    return splits[1] + splits[3];
+    const splits = extraction.split('"');
+    console.log('The splits: ' + extraction);
+    return splits[1] + splits[3] + splits[5];
 }
 
 async function getHLTBData(gameQuery, platform) {
     const myHeaders = new Headers();
-    myHeaders.append("accept", "*/*");
-    myHeaders.append("accept-language", "en-US,en;q=0.9");
     myHeaders.append("content-type", "application/json");
-    myHeaders.append("origin", "https://howlongtobeat.com");
-    myHeaders.append("priority", "u=1, i");
-    myHeaders.append("referer", "https://howlongtobeat.com/?q=war");
-    myHeaders.append("sec-ch-ua", "\"Microsoft Edge\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"");
-    myHeaders.append("sec-ch-ua-mobile", "?0");
-    myHeaders.append("sec-ch-ua-platform", "\"Windows\"");
-    myHeaders.append("sec-fetch-dest", "empty");
-    myHeaders.append("sec-fetch-mode", "cors");
-    myHeaders.append("sec-fetch-site", "same-origin");
-    myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0");
+    myHeaders.append("referer", "https://howlongtobeat.com/");
+    myHeaders.append("user-agent", (await fetch("https://jnrbsn.github.io/user-agents/user-agents.json", {method: 'GET'})).text());
+
 
     const raw = JSON.stringify({
     "searchType": "games",
@@ -211,10 +202,8 @@ async function getHLTBData(gameQuery, platform) {
     redirect: "follow"
     };
 
-    return fetch(`https://howlongtobeat.com/api/lookup/${apiURL}`, requestOptions)
-    .then((response) => response.text())
-    .then((result) => extractDetails(JSON.parse(result)))
-    .catch((error) => console.log(error));
+    return fetch(`https://howlongtobeat.com/${apiURL}`, requestOptions)
+    .then((response) => response.text());
 }
 
 async function extractDetails(result) {
@@ -271,17 +260,29 @@ module.exports = {
 	async execute(interaction) {
         const gameName = interaction.options.getString('title');
         const platform = interaction.options.getString('platform') ?? '';
+        let response, details;
         await interaction.deferReply();
         if (apiURL == "") {
-            await getApiUrl();
-            console.log(`Search API URL updated to ${apiURL}`)
+            
         }
-        let details = await getHLTBData(gameName, platform);
-        
-        if(details == "No results")
-            await interaction.followUp(`No results found for **${gameName}**.`);
-        else
-		    await interaction.followUp({embeds: [buildEmbed(details)]});
+        try {
+            response = await getHLTBData(gameName, platform);
+            details = await extractDetails(JSON.parse(response));
+        }
+        catch(e) {
+            console.log(e);
+
+            await getApiUrl();
+            console.log(`Search API URL updated to ${apiURL}`);
+            response = await getHLTBData(gameName, platform);
+            details = await extractDetails(JSON.parse(response));
+        }
+        finally {
+            if(details == "No results")
+                await interaction.followUp(`No results found for **${gameName}**.`);
+            else
+                await interaction.followUp({embeds: [buildEmbed(details)]});
+        }
 	},
     async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused();
