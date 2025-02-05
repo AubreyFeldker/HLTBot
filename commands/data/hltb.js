@@ -262,7 +262,7 @@ function buildResponse(detailsList, detailNum) {
         reactButtonRows[0].addComponents(next);
     }
     const post = {embeds: [embed], fetchReply: true};
-    if (reactButtonRows[0].length > 0) { post.components = reactButtonRows; }
+    if (reactButtonRows[0].components.length > 0) { post.components = reactButtonRows; }
 
     return post;
 }
@@ -310,7 +310,7 @@ module.exports = {
             followUpMsgID = (await interaction.followUp(buildResponse(details, 0))).id;
             if(details.length == 1)
                 return;
-            
+
             client.gameDetailsCache[followUpMsgID] = details;
             setTimeout(() => delete client.gameDetailsCache[followUpMsgID], 3600000);
 
