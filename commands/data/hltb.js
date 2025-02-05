@@ -261,8 +261,10 @@ function buildResponse(detailsList, detailNum) {
             .setStyle(ButtonStyle.Secondary);
         reactButtonRows[0].addComponents(next);
     }
+    const post = {embeds: [embed], fetchReply: true};
+    if (reactButtonRows[0].length > 0) { post.components = reactButtonRows; }
 
-    return {embeds: [embed], components: reactButtonRows, fetchReply: true};
+    return post;
 }
 
 module.exports = {
@@ -306,6 +308,9 @@ module.exports = {
                 return await interaction.followUp(`No results found for **${gameName}**.`);
                   
             followUpMsgID = (await interaction.followUp(buildResponse(details, 0))).id;
+            if(details.length == 1)
+                return;
+            
             client.gameDetailsCache[followUpMsgID] = details;
             setTimeout(() => delete client.gameDetailsCache[followUpMsgID], 3600000);
 
