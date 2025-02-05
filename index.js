@@ -39,8 +39,7 @@ client.on(Events.InteractionCreate, async interaction => {
         
         const gameNum = parseInt(interaction.customId);
         console.log(gameNum);
-        await interaction.message.edit(client.commands.get('hltb').buildResponse(cachedGameDetails, gameNum));
-        await interaction.deferUpdate();
+        await interaction.update(client.commands.get('hltb').buildResponse(cachedGameDetails, gameNum));
     }
 
 	if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()) return;
