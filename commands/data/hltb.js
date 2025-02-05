@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 let defaultName = "Flower, Sun, and Rain";
 let apiURL = "";
@@ -209,27 +209,34 @@ async function getHLTBData(gameQuery, platform) {
 async function extractDetails(result) {
     if(result.data.length === 0)
         return("No results");
-    const game = result.data[0];
+    const games = result.data;
 
-    let details = {};
+    const detailsList = [];
 
-    details.gameTitle = game['game_name']; // Game Title
-    details.gameImage = `https://howlongtobeat.com/games/${game['game_image']}`; // Game Image
-    details.timeStats = []; // Game Time Stats
+    games.forEach((game) => {
+        let details = {};
+        details.gameTitle = game['game_name']; // Game Title
+        details.gameImage = `https://howlongtobeat.com/games/${game['game_image']}`; // Game Image
+        details.timeStats = []; // Game Time Stats
 
-    const comp_types = ["main", "plus", "100"];
-    const comp_names = ["Main Story", "Main + Extra", "Completionist"]
-    // Creating a len-3 array of [Length Type, Avg Time, Completion confidence]
-    comp_types.forEach((type, index) => {
-        if(game[`comp_${type}`] === 0)
-            return;
-        details.timeStats.push([comp_names[index], Math.round(game[`comp_${type}`] / 360) / 10.0, Math.min(Math.round(game[`comp_${type}_count`] * .4),10).toString()]);
-    });
+        const comp_types = ["main", "plus", "100"];
+        const comp_names = ["Main Story", "Main + Extra", "Completionist"]
+        // Creating a len-3 array of [Length Type, Avg Time, Completion confidence]
+        comp_types.forEach((type, index) => {
+            if(game[`comp_${type}`] === 0)
+                return;
+            details.timeStats.push([comp_names[index], Math.round(game[`comp_${type}`] / 360) / 10.0, Math.min(Math.round(game[`comp_${type}_count`] * .4),10).toString()]);
+        });
+        detailsList.push(details);
+    })
 
-    return details;
+    return detailsList;
 }
 
-function buildEmbed(details) {
+function buildResponse(detailsList, detailNum) {
+    const details = detailsList[detailNum];
+    const reactButtonRows = [new ActionRowBuilder()];
+
     let embed = new EmbedBuilder()
         .setTitle(details.gameTitle)
         .setThumbnail(details.gameImage)
@@ -240,7 +247,22 @@ function buildEmbed(details) {
         embed.addFields({ name: el[0], value: `<:${el[2]}:${timeEmojis.get(el[2])}> **${el[1]} Hours**`});
     });
 
-    return embed;
+    if(detailNum > 0) {
+        const next = new ButtonBuilder()
+            .setCustomId(`${detailNum-1}`)
+            .setLabel('←')
+            .setStyle(ButtonStyle.Secondary);
+        reactButtonRows[0].addComponents(next);
+    }
+    if(detailNum < detailsList.length - 1) {
+        const next = new ButtonBuilder()
+            .setCustomId(`${detailNum+1}`)
+            .setLabel('→')
+            .setStyle(ButtonStyle.Secondary);
+        reactButtonRows[0].addComponents(next);
+    }
+
+    return {embeds: [embed], components: reactButtonRows, fetchReply: true};
 }
 
 module.exports = {
@@ -257,10 +279,12 @@ module.exports = {
                 .setDescription('Platform you want to search for')
                 .setAutocomplete(true)
         ),
-	async execute(interaction) {
+	async execute(client, interaction) {
         const gameName = interaction.options.getString('title');
         const platform = interaction.options.getString('platform') ?? '';
-        let response, details;
+        let response, details, followUpMsgID;
+        
+
         await interaction.deferReply();
         if (apiURL == "") {
             
@@ -279,9 +303,12 @@ module.exports = {
         }
         finally {
             if(details == "No results")
-                await interaction.followUp(`No results found for **${gameName}**.`);
-            else
-                await interaction.followUp({embeds: [buildEmbed(details)]});
+                return await interaction.followUp(`No results found for **${gameName}**.`);
+                  
+            followUpMsgID = (await interaction.followUp(buildResponse(details, 0))).id;
+            client.gameDetailsCache[followUpMsgID] = details;
+            setTimeout(() => delete client.gameDetailsCache[followUpMsgID], 3600000);
+
         }
 	},
     async autocomplete(interaction) {
@@ -292,4 +319,5 @@ module.exports = {
             choices.map(choice => ({ name: choice, value: choice })),
         );
     },
+    buildResponse(details, num) { return buildResponse(details, num); },
 };
