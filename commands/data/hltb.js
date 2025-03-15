@@ -237,12 +237,13 @@ async function extractDetails(result) {
 
         const comp_types = ["main", "plus", "100"];
         const comp_names = ["Main Story", "Main + Extra", "Completionist"]
+        let valid = true;
         // Creating a len-3 array of [Length Type, Avg Time, Completion confidence]
         comp_types.forEach((type, index) => {
             // Outdated search endpoints have started to give out incomplete
             // data (no completion times), so throw error to force resetting endpoint
             if(!game[`comp_${type}`]) 
-                throw "No comp types detected. Outdated endpoint";
+                valid = false;
             if(game[`comp_${type}`] === 0)
                 return;
             
@@ -257,7 +258,7 @@ async function extractDetails(result) {
         detailsList.push(details);
     })
 
-    return detailsList;
+    return valid ? detailsList : "Outdated results";
 }
 
 // Create Discord.js embed object based on the details list
@@ -328,6 +329,8 @@ module.exports = {
         try {
             response = await getHLTBData(gameName, platform);
             details = await extractDetails(JSON.parse(response));
+            if(details === "Outdated results")
+                throw "Outdated results";
         }
         // This will trigger if the search endpoint responds
         // with an error (out of date API), so just need to
