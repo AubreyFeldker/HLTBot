@@ -239,6 +239,10 @@ async function extractDetails(result) {
         const comp_names = ["Main Story", "Main + Extra", "Completionist"]
         // Creating a len-3 array of [Length Type, Avg Time, Completion confidence]
         comp_types.forEach((type, index) => {
+            // Outdated search endpoints have started to give out incomplete
+            // data (no completion times), so throw error to force resetting endpoint
+            if(!game[`comp_${type}`]) 
+                throw "No comp types detected. Outdated endpoint";
             if(game[`comp_${type}`] === 0)
                 return;
             
