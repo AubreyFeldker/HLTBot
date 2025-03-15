@@ -228,6 +228,7 @@ async function extractDetails(result) {
     const games = result.data;
 
     const detailsList = [];
+    let valid = true;
 
     games.forEach((game) => {
         let details = {};
@@ -256,9 +257,9 @@ async function extractDetails(result) {
                 Math.min(Math.round(game[`comp_${type}_count`] * .4),10).toString()]);
         });
         detailsList.push(details);
+        
     })
-
-    return valid ? detailsList : "Outdated results";
+    return (valid) ? detailsList : "Outdated results";
 }
 
 // Create Discord.js embed object based on the details list
