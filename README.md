@@ -1,5 +1,7 @@
 HLTBot is a Discord Bot created by Aubrey Feldker for searching up completion lengths for various videogames. Information is queried from howlongtobeat.com, but this bot is not affliated with them.
 
+**[Add HLTBot to your Discord server](https://discord.com/oauth2/authorize?client_id=1279901877626077184)**
+
 # Usage
 
 The `/hltb` command is the primary way of searching information. Provide the title of the game; the query is not case-sensitive, nor does it require the complete game title, but be careful of excluding symbols or spaces from a game's title.
